@@ -29,6 +29,11 @@ let initialCPU = {
     reg_ins: 0b00000000,
     reg_out: 0b00000000,
     mar: 0b00000000,
+    memory: [],
+	speed: 301
+};
+
+let initialProgram = {
     memory: [
         // LABEL: Top
         0b00011110, // LDA <14>
@@ -51,10 +56,20 @@ let initialCPU = {
         0b00000011, // x
         0b00011101, // y
     ],
-	speed: 300
 };
 
+/******************************************************
+ * Pull memory definition from the memory GET parameter
+ ******************************************************/
+var urlParams = new URLSearchParams(window.location.search);
+var str = urlParams.get('memory');
+var loadedMemory = deepCopy(initialProgram.memory);
+if (str != null) {
+	loadedMemory = JSON.parse('[' + str + ']');
+}
+
 let cpu = deepCopy(initialCPU);
+cpu.memory = deepCopy(loadedMemory);
 
 /*****************************************************************************
  * CPU Functions
@@ -253,6 +268,7 @@ async function executeTick() {
 
 function resetCpu() {
     cpu = deepCopy(initialCPU);
+	cpu.memory = deepCopy(loadedMemory);
     cpuState = [];
     cpuStateIndex = 0;
     autoTick = false;
@@ -284,8 +300,8 @@ function drawClock() {
         document.getElementById('cpu-halted').innerText = "";
     }
     document.getElementById("clock-auto-tick").checked = autoTick;
-	document.getElementById("clk-range").value = cpu.speed;
-	document.getElementById("clk-rate").innerText = cpu.speed;
+	document.getElementById("clk-range").value = (1001-cpu.speed);
+	document.getElementById("clk-rate").innerText = (1001-cpu.speed);
 }
 
 function drawHistory() {
@@ -340,7 +356,7 @@ function blinkenLights() {
     drawLights(document.getElementById('tmp-lights'), printBinary(cpu.reg_tmp, 8).split(''), 'green');
     drawLights(document.getElementById('alu-lights'), printBinary(cpu.alu, 8).split(''));
     drawLights(document.getElementById('out-lights'), printBinary(cpu.reg_out, 8).split(''), 'blue');
-    drawLights(document.getElementById('control-lights'), printBinary(cpu.controlPins, 17).split(''), 'blue', 18);
+    drawLights(document.getElementById('control-lights'), printBinary(cpu.controlPins, 17).split(''), 'blue', 19);
     drawLights(document.getElementById('flag-carry-lights'), printBinary(cpu.carryFlag, 1).split(''), 'orange', 1);
     drawLights(document.getElementById('flag-zero-lights'), printBinary(cpu.zeroFlag, 1).split(''), 'orange', 1);
 
@@ -526,7 +542,7 @@ document.getElementById('clock-auto-tick').addEventListener('change', function()
 });
 
 document.getElementById('clk-range').oninput = function() {
-    cpu.speed = this.value;
+    cpu.speed = (1000 - this.value);
 };
 
 document.getElementById('clk-button').addEventListener('click', function() {
